@@ -1264,6 +1264,12 @@ static void Cvar_Rand( int *ival, float *fval )
 	}
 }
 
+#ifndef DEDICATED
+#ifndef __WASM__
+extern cvar_t *r_headless;
+#endif
+#endif
+
 
 static void Cvar_Func_f( void ) {
 

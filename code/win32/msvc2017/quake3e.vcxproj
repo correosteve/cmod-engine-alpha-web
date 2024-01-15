@@ -378,6 +378,7 @@
     <ClCompile Include="..\..\filesystem\zlib\inftrees.c" />
     <ClCompile Include="..\..\filesystem\zlib\zutil.c" />
     <ClCompile Include="..\..\qcommon\cmd.c" />
+    <ClCompile Include="..\..\qcommon\splines.c" />
     <ClCompile Include="..\..\qcommon\cm_load.c" />
     <ClCompile Include="..\..\qcommon\cm_patch.c" />
     <ClCompile Include="..\..\qcommon\cm_polylib.c" />
@@ -413,6 +414,7 @@
     </ClCompile>
     <ClCompile Include="..\..\server\sv_bot.c" />
     <ClCompile Include="..\..\server\sv_ccmds.c" />
+    <ClCompile Include="..\..\server\sv_bsp_mini.c" />
     <ClCompile Include="..\..\server\sv_client.c" />
     <ClCompile Include="..\..\server\sv_filter.c" />
     <ClCompile Include="..\..\server\sv_game.c" />

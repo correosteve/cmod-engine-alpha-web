@@ -469,6 +469,7 @@ void SV_SpawnServer( const char *mapname, qboolean killBots ) {
 	// also print some status stuff
 	CL_MapLoading();
 
+#ifndef __WASM__
 	// make sure all the client stuff is unloaded
 	CL_ShutdownAll();
 #endif
@@ -484,8 +485,10 @@ void SV_SpawnServer( const char *mapname, qboolean killBots ) {
 #endif
 #endif
 
+#ifndef __WASM__
 	// clear the whole hunk because we're (re)loading the server
 	Hunk_Clear();
+#endif
 
 	// clear collision map data
 	CM_ClearMap();
@@ -1025,6 +1028,7 @@ before Sys_Quit or Sys_Error
 ================
 */
 void SV_Shutdown( const char *finalmsg ) {
+
 	if ( !com_sv_running || !com_sv_running->integer ) {
 		return;
 	}
@@ -1072,10 +1076,12 @@ void SV_Shutdown( const char *finalmsg ) {
 
 	Com_Printf( "---------------------------\n" );
 
+#ifndef __WASM__
 #ifndef DEDICATED
 	// disconnect any local clients
 	if ( sv_killserver->integer != 2 )
 		CL_Disconnect( qfalse );
+#endif
 #endif
 
 	// clean some server cvars

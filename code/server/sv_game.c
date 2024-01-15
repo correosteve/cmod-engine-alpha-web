@@ -59,6 +59,7 @@ playerState_t *SV_GameClientNum( int num ) {
 svEntity_t	*SV_SvEntityForGentity( sharedEntity_t *gEnt ) {
 	if ( !gEnt || gEnt->s.number < 0 || gEnt->s.number >= MAX_GENTITIES ) {
 		Com_Error( ERR_DROP, "SV_SvEntityForGentity: bad gEnt" );
+		return NULL;
 	}
 	return &sv.svEntities[ gEnt->s.number ];
 }
@@ -375,7 +376,7 @@ static intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		const char *error = VMA( 1 );
 		if ( !strncmp( error, "FinishSpawningItem", 18 ) && Q_stristr( error, "startsolid" ) ) {
 				Com_Printf( "NOTE: Skipping VM startsolid error '%s'\n", error );
-				return 0;
+			return 0;
 		}
 	}
 #endif
