@@ -129,6 +129,8 @@ cvar_t *sv_bspMiniGrid;
 
 
 
+char   *FS_BuildOSPath( const char *base, const char *game, const char *qpath );
+
 /*
    ================
    WriteTGA

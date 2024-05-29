@@ -2261,12 +2261,13 @@ static void CL_DownloadsComplete( void ) {
 	// if this is a local client then only the client part of the hunk
 	// will be cleared, note that this is done after the hunk mark has been set
 	//if ( !com_sv_running->integer )
+#ifndef __WASM__
 #ifdef NEW_FILESYSTEM
 	CL_SystemInfoChanged( qfalse );
 	if ( !FS_ConditionalRestart( clc.checksumFeed, qfalse ) ) {
 	}
-#ifndef __WASM__
 	CL_FlushMemory();
+#endif
 #else
 extern	qboolean	first_click;
 
@@ -2880,6 +2881,7 @@ static void CL_ServersResponsePacket( const netadr_t* from, msg_t *msg, qboolean
 	serverInfo_t	*server;
 #ifdef ELITEFORCE
 	char strbyte[3] = "FF";
+#endif
 	serverInfo_t *servers = &cls.globalServers[0];
 	int	*max = &cls.numglobalservers;
 
@@ -5589,6 +5591,9 @@ CL_ShowIP_f
 static void CL_ShowIP_f( void ) {
 	Sys_ShowIP();
 }
+
+
+#endif
 
 
 #ifdef USE_CURL

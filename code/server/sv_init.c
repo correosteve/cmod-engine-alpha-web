@@ -473,6 +473,9 @@ void SV_SpawnServer( const char *mapname, qboolean killBots ) {
 	// make sure all the client stuff is unloaded
 	CL_ShutdownAll();
 #endif
+#endif
+
+	// clear server state
 
 #ifdef NEW_FILESYSTEM
 	// This is sometimes called in CL_MapLoading->CL_Disconnect, but not in the case

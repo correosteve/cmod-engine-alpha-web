@@ -197,8 +197,6 @@ or configs will never get loaded from disk!
 
 */
 
-#ifndef __WASM__
-
 // every time a new demo pk3 file is built, this checksum must be updated.
 // the easiest way to get it is to just run the game and see what it spits out
 #ifdef ELITEFORCE
@@ -223,8 +221,9 @@ static const unsigned pak_checksums[] = {
 	977125798u
 };
 
+#endif
 
-#else
+#ifdef __WASM__
 
 typedef struct altChecksumFiles {
 	char pakFilename[20];
@@ -5134,6 +5133,7 @@ static void FS_CheckIdPaks( void )
 			Com_Error(ERR_FATAL, "\n*** you need to install Quake III Arena in order to play ***");
 #endif
 	}
+#endif
 }
 
 
@@ -6092,4 +6092,5 @@ void *FS_LoadLibrary( const char *name )
 
 	return libHandle;
 }
+
 #endif

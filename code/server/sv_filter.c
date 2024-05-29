@@ -728,6 +728,7 @@ static qboolean parse_file( const char *filename )
 }
 
 
+
 static void SV_ReloadFilters( const char *filename, filter_node_t *new_node )
 {
 	static char loaded_name[ MAX_OSPATH * 3 ];

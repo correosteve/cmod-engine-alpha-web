@@ -1664,6 +1664,7 @@ void *Z_Malloc( int size )
 }
 
 #ifdef __WASM__
+
 qboolean FS_CreatePath( const char *OSPath );
 byte *R_FindPalette(const char *name);
 int Key_GetCatcher( void );
@@ -1673,6 +1674,7 @@ void *stackSave( void );
 void *stackAlloc(int);
 void S_SoundInfo( void );
 void CL_NextDownload( void );
+char *FS_CopyString( const char *in );
 
 
 Q_EXPORT intptr_t sprintfLocation = (intptr_t)sprintf;
