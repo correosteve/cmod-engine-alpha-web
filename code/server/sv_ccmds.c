@@ -197,6 +197,7 @@ static void SV_Map_f( void ) {
 			Q_strncpyz(alreadyTried, map, sizeof(alreadyTried));
 		} else
 #endif
+#endif
 		Com_Printf( "Can't find map %s\n", expanded );
 		return;
 	}

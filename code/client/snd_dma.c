@@ -363,6 +363,7 @@ static sfxHandle_t S_Base_RegisterSound( const char *name, qboolean compressed )
 #ifndef __WASM__
 		Com_Printf( S_COLOR_YELLOW "WARNING: could not find %s - using default\n", sfx->soundName );
 #endif
+#endif
 		return 0;
 	}
 
@@ -390,12 +391,14 @@ static void S_Base_BeginRegistration( void ) {
 	Com_Memset( sfxHash, 0, sizeof( sfxHash ) );
 #endif
 
-#ifdef ELITEFORCE
-	S_Base_RegisterSound("sound/null.wav", qfalse); // Eliteforce specific sound.
 #ifdef __WASM__
 	S_Base_RegisterSound( "sound/misc/silence.wav", qfalse ); // changed to a sound in baseq3
 #else
+#ifdef ELITEFORCE
+	S_Base_RegisterSound("sound/null.wav", qfalse); // Eliteforce specific sound.
+#else
 	S_Base_RegisterSound( "sound/feedback/hit.wav", qfalse ); // changed to a sound in baseq3
+#endif
 #endif
 }
 

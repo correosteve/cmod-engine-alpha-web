@@ -808,7 +808,17 @@ static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		re.RemapShader( VMA(1), VMA(2), VMA(3) );
 		return 0;
 
-/*
+	case CG_GET_ENTITY_TOKEN:
+		VM_CHECKBOUNDS( cgvm, args[1], args[2] );
+		return re.GetEntityToken( VMA(1), args[2] );
+
+	case CG_R_INPVS:
+		return re.inPVS( VMA(1), VMA(2) );
+
+
+#endif
+
+
 	case CG_LOADCAMERA:
 		return loadCamera(VMA(1));
 
@@ -823,13 +833,6 @@ static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		stopCamera(args[1]);
 		return 0;
 
-	case CG_GET_ENTITY_TOKEN:
-		VM_CHECKBOUNDS( cgvm, args[1], args[2] );
-		return re.GetEntityToken( VMA(1), args[2] );
-
-	case CG_R_INPVS:
-		return re.inPVS( VMA(1), VMA(2) );
-#endif
 
 	// engine extensions
 	case CG_R_ADDREFENTITYTOSCENE2:

@@ -170,6 +170,8 @@ typedef enum {
 	CG_FS_SEEK,
 
 
+	#endif
+
 	// camera extensions
 	CG_LOADCAMERA,
 	CG_STARTCAMERA,
@@ -233,7 +235,7 @@ typedef enum {
 	CG_LAST_ATTACKER,
 //	int (*CG_LastAttacker)( void );
 
-#ifndef ELITEFORCE
+//#ifndef ELITEFORCE
 	CG_KEY_EVENT, 
 //	void	(*CG_KeyEvent)( int key, qboolean down );
 
@@ -242,7 +244,7 @@ typedef enum {
 
 	CG_EVENT_HANDLING,
 //	void (*CG_EventHandling)(int type);
-#endif
+//#endif
 
 	CG_EXPORT_LAST,
 } cgameExport_t;
