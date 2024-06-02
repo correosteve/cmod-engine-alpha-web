@@ -113,7 +113,7 @@
 
 #define lua_tmpnam(b,e) { \
         strcpy(b, LUA_TMPNAMTEMPLATE); \
-        e = mkstemp(b); \
+        /*e = mkstemp(b);*/ \
         if (e != -1) close(e); \
         e = (e == -1); }
 

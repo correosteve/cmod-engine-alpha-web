@@ -9,7 +9,7 @@
 #define USE_CODEC_MP3
 
 // [FEATURE] New filesystem with various improvements
-#define NEW_FILESYSTEM
+//#define NEW_FILESYSTEM
 
 /* ******************************************************************************** */
 // Common

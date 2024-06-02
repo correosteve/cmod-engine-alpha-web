@@ -230,7 +230,7 @@ static int Stef_Lua_OpenFileSVAppend( lua_State *L ) {
 	const char *path = lua_tostring( L, 1 );
 	fileHandle_t handle = FS_INVALID_HANDLE;
 	if ( path ) {
-		handle = FS_SV_FOpenFileAppend( path );
+		handle = FS_FOpenFileAppend( path );
 	}
 	if ( handle != FS_INVALID_HANDLE ) {
 		lua_pushinteger( L, handle );

@@ -406,6 +406,7 @@ BASE_CFLAGS    += -fno-rtti -Wall \
 	-Wimplicit -fstrict-aliasing  -fno-inline \
 	-ftree-vectorize -fsigned-char -MMD \
 	-fno-short-enums  -fPIC \
+  -DLUA_USE_POSIX=1 \
   -DNO_VM_COMPILED=1 -fno-common  \
 	-D_XOPEN_SOURCE=700 -D__EMSCRIPTEN__=1 \
 	-D__WASM__=1 -D__wasi__=1 -D__wasm32__=1 \
