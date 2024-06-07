@@ -1379,12 +1379,21 @@ static int R_SpriteFogNum( const trRefEntity_t *ent ) {
 	for ( i = 1 ; i < tr.world->numfogs ; i++ ) {
 		fog = &tr.world->fogs[i];
 		for ( j = 0 ; j < 3 ; j++ ) {
+#ifdef ELITEFORCE
+			if ( ent->e.origin[j] - ent->e.data.sprite.radius >= fog->bounds[1][j] ) {
+				break;
+			}
+			if ( ent->e.origin[j] + ent->e.data.sprite.radius <= fog->bounds[0][j] ) {
+				break;
+			}
+#else
 			if ( ent->e.origin[j] - ent->e.radius >= fog->bounds[1][j] ) {
 				break;
 			}
 			if ( ent->e.origin[j] + ent->e.radius <= fog->bounds[0][j] ) {
 				break;
 			}
+#endif
 		}
 		if ( j == 3 ) {
 			return i;

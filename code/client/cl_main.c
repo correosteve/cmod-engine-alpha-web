@@ -4518,7 +4518,9 @@ void CL_Init( void ) {
 	Cmd_SetCommandCompletionFunc( "rcon", CL_CompleteRcon );
 	Cmd_AddCommand ("ping", CL_Ping_f );
 	Cmd_AddCommand ("serverstatus", CL_ServerStatus_f );
+#ifndef __WASM__
 	Cmd_AddCommand ("showip", CL_ShowIP_f );
+#endif
 #ifndef NEW_FILESYSTEM
 	Cmd_AddCommand ("fs_openedList", CL_OpenedPK3List_f );
 	Cmd_AddCommand ("fs_referencedList", CL_ReferencedPK3List_f );

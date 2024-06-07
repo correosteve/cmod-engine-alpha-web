@@ -83,7 +83,7 @@
 /* chain list of long jump buffers */
 struct lua_longjmp {
   struct lua_longjmp *previous;
-  luai_jmpbuf b;
+//  luai_jmpbuf b;
   volatile int status;  /* error code */
 };
 
@@ -115,7 +115,7 @@ void luaD_seterrorobj (lua_State *L, int errcode, StkId oldtop) {
 l_noret luaD_throw (lua_State *L, int errcode) {
   if (L->errorJmp) {  /* thread has an error handler? */
     L->errorJmp->status = errcode;  /* set status */
-    LUAI_THROW(L, L->errorJmp);  /* jump to it */
+//    LUAI_THROW(L, L->errorJmp);  /* jump to it */
   }
   else {  /* thread has no error handler */
     global_State *g = G(L);
@@ -141,9 +141,9 @@ int luaD_rawrunprotected (lua_State *L, Pfunc f, void *ud) {
   lj.status = LUA_OK;
   lj.previous = L->errorJmp;  /* chain new error handler */
   L->errorJmp = &lj;
-  LUAI_TRY(L, &lj,
-    (*f)(L, ud);
-  );
+//  LUAI_TRY(L, &lj,
+//    (*f)(L, ud);
+//  );
   L->errorJmp = lj.previous;  /* restore old error handler */
   L->nCcalls = oldnCcalls;
   return lj.status;
