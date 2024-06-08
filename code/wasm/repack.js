@@ -53,7 +53,8 @@ async function compareZip(pk3File) {
     // TODO: repack the pk3 file
     let tempFile = 'Archive.' + (Date.now() + '').substring(20, -5)
     for(let pack_i = 0; pack_i < textFiles.length; pack_i++) {
-      let startArgs = ['-v', '-9']
+      console.log(Math.round(pack_i / textFiles.length * 100, 2), textFiles[pack_i])
+      let startArgs = ['-9']
       //.concat(pack_i == textFiles.length - 1 ? ['-o'] : [])
         .concat(['-u', tempFile, textFiles[pack_i]])
       //console.log(startArgs)  
@@ -80,7 +81,6 @@ async function compareZip(pk3File) {
 
 
 async function convertImages(pk3File) {
-  console.log(pk3File)
   let sourcePath = path.join(__dirname, '../../docs/')
   let altName = pk3File.replace(path.extname(pk3File), '.tga')
   let altPath = path.join(sourcePath, altName)
@@ -213,11 +213,19 @@ async function generatePalette(pk3File) {
     cwd: pk3Path 
   })).filter(f => f.match(IMAGE_TYPES))
 
-  console.log(imageFiles)
   for(let image_i = 0; image_i < imageFiles.length; image_i++) {
+
+    console.log(Math.round(image_i / imageFiles.length * 100, 2), imageFiles[image_i])
+
+    if(imageFiles[image_i].indexOf('.png') == -1 && imageFiles[image_i].indexOf('.jpg')) {
+      await convertImages(path.join('/', pk3File, 'pak0.pk3dir', imageFiles[image_i].replace(path.extname(imageFiles[image_i]), '.png')))
+      await convertImages(path.join('/', pk3File, 'pak0.pk3dir', imageFiles[image_i].replace(path.extname(imageFiles[image_i]), '.jpg')))
+    }
+
     if(typeof palette[imageFiles[image_i]] != 'undefined') {
       continue
     }
+
     // get average image color for palette
     try {
       let alphaProcess = await spawnSync('convert', [
@@ -245,7 +253,6 @@ async function generatePalette(pk3File) {
   
 
 }
-
 
 
 module.exports = checkForRepack
