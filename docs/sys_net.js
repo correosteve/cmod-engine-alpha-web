@@ -678,7 +678,14 @@ function CL_Download(cmd, name, auto) {
               nameStr += '.pk3'
               }
               return responseData
-            })])).filter(f => f)[0]
+            }),
+          await Com_DL_Begin(localName + '.bsp', remoteURL + '.bsp')
+          .then(responseData => {
+            if(responseData && !nameStr.match(/\.bsp$/)) {
+            nameStr = 'maps/' + nameStr + '.bsp'
+            }
+            return responseData
+          })])).filter(f => f)[0]
       } else {
         // valid from disk
         responseData = result.contents

@@ -1635,7 +1635,7 @@ static void R_AddEntitySurface (int entityNum)
 		}
 		break;
 	default:
-		ri.Error( ERR_DROP, "R_AddEntitySurfaces: Bad reType" );
+		//ri.Error( ERR_DROP, "R_AddEntitySurfaces: Bad reType" );
 	}
 }
 
