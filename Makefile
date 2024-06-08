@@ -1,4 +1,4 @@
-
+PLATFORM=wasm
 # Quake3 Unix Makefile
 #
 # Nov '98 by Zoid <zoid@idsoftware.com>
@@ -406,7 +406,6 @@ BASE_CFLAGS    += -fno-rtti -Wall \
 	-Wimplicit -fstrict-aliasing  -fno-inline \
 	-ftree-vectorize -fsigned-char -MMD \
 	-fno-short-enums  -fPIC \
-  -DLUA_USE_POSIX=1 \
   -DNO_VM_COMPILED=1 -fno-common  \
 	-D_XOPEN_SOURCE=700 -D__EMSCRIPTEN__=1 \
 	-D__WASM__=1 -D__wasi__=1 -D__wasm32__=1 \
@@ -898,11 +897,9 @@ endif
 	@if [ ! -d $(B)/ded/filesystem/fscore ];then $(MKDIR) $(B)/ded/filesystem/fscore;fi
 	@if [ ! -d $(B)/ded/filesystem/zlib ];then $(MKDIR) $(B)/ded/filesystem/zlib;fi
 	@if [ ! -d $(B)/client/eliteforce ];then $(MKDIR) $(B)/client/eliteforce;fi
-	@if [ ! -d $(B)/client/eliteforce/lua ];then $(MKDIR) $(B)/client/eliteforce/lua;fi
 	@if [ ! -d $(B)/client/eliteforce/mad ];then $(MKDIR) $(B)/client/eliteforce/mad;fi
 	@if [ ! -d $(B)/client/eliteforce/server ];then $(MKDIR) $(B)/client/eliteforce/server;fi
 	@if [ ! -d $(B)/ded/eliteforce ];then $(MKDIR) $(B)/ded/eliteforce;fi
-	@if [ ! -d $(B)/ded/eliteforce/lua ];then $(MKDIR) $(B)/ded/eliteforce/lua;fi
 	@if [ ! -d $(B)/ded/eliteforce/server ];then $(MKDIR) $(B)/ded/eliteforce/server;fi
 
 #############################################################################
@@ -1175,39 +1172,6 @@ FSOBJ = \
   $(B)/client/filesystem/fs_trusted_vms.o
 
 EFCOMMON = \
-  $(B)/client/eliteforce/lua/lapi.o \
-  $(B)/client/eliteforce/lua/lauxlib.o \
-  $(B)/client/eliteforce/lua/lbaselib.o \
-  $(B)/client/eliteforce/lua/lcode.o \
-  $(B)/client/eliteforce/lua/lcorolib.o \
-  $(B)/client/eliteforce/lua/lctype.o \
-  $(B)/client/eliteforce/lua/ldblib.o \
-  $(B)/client/eliteforce/lua/ldebug.o \
-  $(B)/client/eliteforce/lua/ldo.o \
-  $(B)/client/eliteforce/lua/ldump.o \
-  $(B)/client/eliteforce/lua/lfunc.o \
-  $(B)/client/eliteforce/lua/lgc.o \
-  $(B)/client/eliteforce/lua/linit.o \
-  $(B)/client/eliteforce/lua/liolib.o \
-  $(B)/client/eliteforce/lua/llex.o \
-  $(B)/client/eliteforce/lua/lmathlib.o \
-  $(B)/client/eliteforce/lua/lmem.o \
-  $(B)/client/eliteforce/lua/loadlib.o \
-  $(B)/client/eliteforce/lua/lobject.o \
-  $(B)/client/eliteforce/lua/lopcodes.o \
-  $(B)/client/eliteforce/lua/loslib.o \
-  $(B)/client/eliteforce/lua/lparser.o \
-  $(B)/client/eliteforce/lua/lstate.o \
-  $(B)/client/eliteforce/lua/lstring.o \
-  $(B)/client/eliteforce/lua/lstrlib.o \
-  $(B)/client/eliteforce/lua/ltable.o \
-  $(B)/client/eliteforce/lua/ltablib.o \
-  $(B)/client/eliteforce/lua/ltm.o \
-  $(B)/client/eliteforce/lua/lundump.o \
-  $(B)/client/eliteforce/lua/lutf8lib.o \
-  $(B)/client/eliteforce/lua/lvm.o \
-  $(B)/client/eliteforce/lua/lzio.o \
-  $(B)/client/eliteforce/server/stef_sv_lua.o \
   $(B)/client/eliteforce/server/stef_sv_misc.o \
   $(B)/client/eliteforce/server/stef_sv_record_common.o \
   $(B)/client/eliteforce/server/stef_sv_record_convert.o \
@@ -1216,7 +1180,6 @@ EFCOMMON = \
   $(B)/client/eliteforce/server/stef_sv_record_writer.o \
   $(B)/client/eliteforce/stef_common.o \
   $(B)/client/eliteforce/stef_logging.o \
-  $(B)/client/eliteforce/stef_lua.o \
   $(B)/client/eliteforce/stef_misc.o \
   $(B)/client/eliteforce/vm_extensions.o
 

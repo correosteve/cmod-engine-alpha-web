@@ -12,3 +12,7 @@ Makefile.local
 docs/demoq3/pak0.pk3dir/.DS_Store
 .DS_Store
 .DS_Store
+/code/wasm/wasi-sdk-22.0
+cmod-engine-alpha-web.code-workspace
+/.gitignore
+/code/wasm/linux
