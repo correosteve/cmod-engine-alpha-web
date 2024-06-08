@@ -201,12 +201,12 @@ async function generatePalette(pk3File) {
   if(fs.existsSync(paletteFile)) {
     existingPalette = fs.readFileSync(paletteFile).toString('utf-8')
     var m
+
     while((m = (MATCH_PALETTE).exec(existingPalette)) !== null) {
       palette[path.join(pk3Path, m[1])] = m[2]
     }
     existingPalette = existingPalette.replace(/palettes\/.*?\n*\{[\s\S]*?\}\n*/ig, '')
   }
-
 
   const imageFiles = (await glob('**/*', { 
     ignore: 'node_modules/**', 
@@ -246,7 +246,7 @@ async function generatePalette(pk3File) {
 
   existingPalette = `palettes/default
   {
-  ${Object.keys(palette).map((k, v, i) => `  palette "${k.replace(pk3Path, '')}" ${v}`).join('\n')}
+  ${Object.keys(palette).map((k, i) => `  palette "${k.replace(pk3Path, '')}" ${palette[k]}`).join('\n')}
   }
   ` + existingPalette
     fs.writeFileSync(paletteFile, existingPalette)
