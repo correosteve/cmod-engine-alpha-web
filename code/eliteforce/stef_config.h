@@ -24,7 +24,7 @@
 #endif
 
 // [FEATURE] Core Lua scripting support.
-#define STEF_LUA_SUPPORT
+//lob #define STEF_LUA_SUPPORT
 
 // [FEATURE] Additional Lua event calls.
 #if defined( STEF_LUA_SUPPORT )

@@ -212,7 +212,7 @@ async function readPreFS() {
   // TODO: replace with Com_StartupVariable
   // TODO: CL_Game_f() to switch games with a command, SV_GameRestart_f?
   // TODO: safe to get from query like Com_StartupVariable
-  let basegame = 'demoq3'
+  let basegame = 'baseef'
   let argsI = SYS.startArgs.indexOf('fs_game')
   if(argsI == -1) {
     argsI = SYS.startArgs.indexOf('fs_basegame')

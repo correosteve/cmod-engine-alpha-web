@@ -103,10 +103,10 @@ function getQueryCommands() {
 	// TODO: from URL or default.cfg?
 	if(!startup.includes('fs_basegame')) {
 		startup.push.apply(startup, [
-			'+set', 'fs_basegame', 'demoq3',
+			'+set', 'fs_basegame', 'baseef',
 		])
-		if(typeof FS.virtual['demoq3'] == 'undefined') {
-			FS.virtual['demoq3'] = {
+		if(typeof FS.virtual['baseef'] == 'undefined') {
+			FS.virtual['baseef'] = {
 				timestamp: new Date(),
 				mode: FS_DIR,
 			}

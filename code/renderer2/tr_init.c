@@ -1450,8 +1450,8 @@ void R_Init( void ) {
 	tr.new_filesystem = ri.Cvar_VariableIntegerValue( "new_filesystem" ) ? qtrue : qfalse;
 #endif
 
-	if(sizeof(glconfig_t) != 11332)
-		ri.Error( ERR_FATAL, "Mod ABI incompatible: sizeof(glconfig_t) == %u != 11332", (unsigned int) sizeof(glconfig_t));
+//	if(sizeof(glconfig_t) != 11332)
+//		ri.Error( ERR_FATAL, "Mod ABI incompatible: sizeof(glconfig_t) == %u != 11332", (unsigned int) sizeof(glconfig_t));
 
 	if ( (intptr_t)tess.xyz & 15 ) {
 		ri.Printf( PRINT_WARNING, "tess.xyz not 16 byte aligned\n" );
