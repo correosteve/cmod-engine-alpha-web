@@ -178,14 +178,14 @@ async function initBrowser() {
 	function initPreload() {
 		return new Promise(function (resolve) {
 			setTimeout(function () {
-				resolve(FS.virtual['quake3e.wasm'].contents)
+				resolve(FS.virtual['cmod.wasm'].contents)
 			}, 200)
 		})
 	}
 
 	// no delay on remote loads
 	function initStreaming() {
-		return fetch('quake3e.wasm?time=' + NET.cacheBuster)
+		return fetch('cmod.wasm?time=' + NET.cacheBuster)
 			.catch(function (e) { console.error(e) })
 			.then(function (response) {
 				if(response && response.status == 200) {
@@ -202,7 +202,7 @@ async function initBrowser() {
 	// might as well start this early, transfer 
 	//    IndexedDB from disk/memory to application memory
 	let bytes
-	if(typeof FS.virtual['quake3e.wasm'] != 'undefined') {
+	if(typeof FS.virtual['cmod.wasm'] != 'undefined') {
 		bytes = await Promise.resolve(initPreload())
 	} else {
 		isStreaming = true
