@@ -16,3 +16,4 @@ docs/demoq3/pak0.pk3dir/.DS_Store
 cmod-engine-alpha-web.code-workspace
 /.gitignore
 /code/wasm/linux
+/buildx
