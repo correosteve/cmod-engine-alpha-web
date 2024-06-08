@@ -1,4 +1,8 @@
+#make PLATFORM=wasm USE_RENDERER_DLOPEN=0 USE_OPENGL2=1
 PLATFORM=wasm
+USE_RENDERER_DLOPEN=0
+USE_OPENGL2=1
+
 # Quake3 Unix Makefile
 #
 # Nov '98 by Zoid <zoid@idsoftware.com>
