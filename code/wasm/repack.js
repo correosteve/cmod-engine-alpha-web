@@ -271,10 +271,18 @@ async function convertAudio(pk3File) {
     return
   }
 
-  let audioProcess = await spawnSync('oggenc', ['-q', '7', '--downmix', '--resample', '11025', '--quiet', pk3Path, '-n', altPath], {
-    cwd: sourcePath,
-    timeout: 3000,
-  })
+  let audioProcess
+  if(pk3File.indexOf('.mp3') != -1) {
+    audioProcess = await spawnSync('ffmpeg', ['-i', pk3Path, '-c:a', 'libvorbis', '-q:a', '4', altPath], {
+      cwd: sourcePath,
+      timeout: 3000,
+    })
+  } else {
+    audioProcess = await spawnSync('oggenc', ['-q', '7', '--downmix', '--resample', '11025', '--quiet', pk3Path, '-n', altPath], {
+      cwd: sourcePath,
+      timeout: 3000,
+    })
+  }
 
   await new Promise((resolve) => setTimeout(resolve, 100))
   console.log(audioProcess.stderr.toString('utf-8'))
