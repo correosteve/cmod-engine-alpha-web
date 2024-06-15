@@ -24,7 +24,7 @@ const SUPPORTED_FORMATS = [
 ]
 
 // include icons because menu uses it to load, not a lazy check unforntunatly
-const FILE_TYPES = new RegExp('(' + SUPPORTED_FORMATS.join('|') + ')$|menu\/|gfx\/2d\/|players\/[^\/]*?\/icon.*\.tga', 'ig')
+const FILE_TYPES = new RegExp('(' + SUPPORTED_FORMATS.join('|') + ')$|menu\/|gfx\/2d\/|players\/[^\/]*?\/icon.*\.tga|_tracemap\.tga', 'ig')
 
 let lockFunc = false
 let lockPromise
@@ -80,7 +80,7 @@ async function compareZip(pk3File) {
 }
 
 
-async function convertImages(pk3File) {
+async function convertImage(pk3File) {
   let sourcePath = path.join(__dirname, '../../docs/')
   let altName = pk3File.replace(path.extname(pk3File), '.tga')
   let altPath = path.join(sourcePath, altName)
@@ -159,7 +159,7 @@ async function checkForRepack(request, response, next) {
 
   // TODO: requesting an image, convert it
   if(request.originalUrl.includes('.png') || request.originalUrl.includes('.jpg')) {
-    let altPath = await convertImages(request.originalUrl.replace(/\?.*$/gi, ''))
+    let altPath = await convertImage(request.originalUrl.replace(/\?.*$/gi, ''))
     if(altPath) {
       fs.createReadStream(altPath).pipe(response);
       return response
@@ -203,9 +203,9 @@ async function generatePalette(pk3File) {
     var m
 
     while((m = (MATCH_PALETTE).exec(existingPalette)) !== null) {
-      palette[path.join(pk3Path, m[1])] = m[2]
+      palette[m[1]] = m[2]
     }
-    existingPalette = existingPalette.replace(/palettes\/.*?\n*\{[\s\S]*?\}\n*/ig, '')
+    existingPalette = ''
   }
 
   const imageFiles = (await glob('**/*', { 
@@ -217,9 +217,9 @@ async function generatePalette(pk3File) {
 
     console.log(Math.round(image_i / imageFiles.length * 100, 2), imageFiles[image_i])
 
-    if(imageFiles[image_i].indexOf('.png') == -1 && imageFiles[image_i].indexOf('.jpg')) {
-      await convertImages(path.join('/', pk3File, 'pak0.pk3dir', imageFiles[image_i].replace(path.extname(imageFiles[image_i]), '.png')))
-      await convertImages(path.join('/', pk3File, 'pak0.pk3dir', imageFiles[image_i].replace(path.extname(imageFiles[image_i]), '.jpg')))
+    if(imageFiles[image_i].indexOf('.png') == -1 && imageFiles[image_i].indexOf('.jpg') == -1) {
+      await convertImage(path.join('/', pk3File, 'pak0.pk3dir', imageFiles[image_i].replace(path.extname(imageFiles[image_i]), '.png')))
+      await convertImage(path.join('/', pk3File, 'pak0.pk3dir', imageFiles[image_i].replace(path.extname(imageFiles[image_i]), '.jpg')))
     }
 
     if(typeof palette[imageFiles[image_i]] != 'undefined') {
@@ -248,11 +248,73 @@ async function generatePalette(pk3File) {
   {
   ${Object.keys(palette).map((k, i) => `  palette "${k.replace(pk3Path, '')}" ${palette[k]}`).join('\n')}
   }
-  ` + existingPalette
+  `
     fs.writeFileSync(paletteFile, existingPalette)
   
 
 }
+
+
+
+
+async function convertAudio(pk3File) {
+  let sourcePath = path.join(__dirname, '../../docs/')
+  let pk3Path = path.join(sourcePath, pk3File)
+  let altPath = path.join(sourcePath, pk3File).replace(path.extname(pk3File), '.ogg')
+  if(fs.existsSync(altPath)) {
+    console.log('file already exists ' + pk3Path)
+    return altPath
+  }
+
+  if(!fs.existsSync(pk3Path)) {
+    console.log('file does not exist ' + pk3Path)
+    return
+  }
+
+  let audioProcess = await spawnSync('oggenc', ['-q', '7', '--downmix', '--resample', '11025', '--quiet', pk3Path, '-n', altPath], {
+    cwd: sourcePath,
+    timeout: 3000,
+  })
+
+  await new Promise((resolve) => setTimeout(resolve, 100))
+  console.log(audioProcess.stderr.toString('utf-8'))
+  console.log(audioProcess.stdout.toString('utf-8'))
+
+  return pk3Path
+}
+
+
+
+const AUDIO_TYPES = new RegExp('(' + [
+  '.wav',
+  '.mp3',
+].join('|') + ')$')
+
+
+async function convertSounds(pk3File) {
+  let sourcePath = path.join(__dirname, '../../docs/')
+  let pk3Path = path.join(sourcePath, pk3File, 'pak0.pk3dir')
+  if(!fs.existsSync(pk3Path)) {
+    return
+  }
+
+  const audioFiles = (await glob('**/*', { 
+    ignore: 'node_modules/**', 
+    cwd: pk3Path 
+  })).filter(f => f.match(AUDIO_TYPES))
+
+  for(let audio_i = 0; audio_i < audioFiles.length; audio_i++) {
+
+    console.log(Math.round(audio_i / audioFiles.length * 100, 2), audioFiles[audio_i])
+
+    if(audioFiles[audio_i].indexOf('.ogg') == -1) {
+      await convertAudio(path.join('/', pk3File, 'pak0.pk3dir', audioFiles[audio_i]))
+    }
+  }
+
+ 
+}
+
 
 
 module.exports = checkForRepack
@@ -260,6 +322,7 @@ module.exports = checkForRepack
 
 if(require.main === module && process.argv[1] == __filename) {
   generatePalette('baseef')
+  .then(() => convertSounds('baseef'))
   .then(() => compareZip('baseef/pak0.pk3'))
   .then(result => {
     console.log(result)
