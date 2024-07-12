@@ -889,7 +889,21 @@ void CL_WritePacket( void ) {
 		Com_Printf( "%i ", buf.cursize );
 	}
 
-	CL_Netchan_Transmit( &clc.netchan, &buf );
+	MSG_WriteByte( &buf, clc_EOF );
+
+	if ( buf.overflowed ) {
+		if ( cls.state >= CA_CONNECTED && cls.state != CA_CINEMATIC ) {
+			cls.state = CA_CONNECTING; // to avoid recursive error
+		}
+		Com_Error( ERR_DROP, "%s: message overflowed", __func__ );
+	}
+
+	if ( repeat == 0 || clc.netchan.remoteAddress.type == NA_LOOPBACK ) {
+		CL_Netchan_Transmit( &clc.netchan, &buf );
+	} else {
+		CL_Netchan_Enqueue( &clc.netchan, &buf, repeat + 1 );
+		NET_FlushPacketQueue( 0 );
+	}
 }
 
 

@@ -662,7 +662,8 @@ void SV_SpawnServer( const char *mapname, qboolean killBots ) {
 				// was connected before the level change
 				SV_DropClient( &svs.clients[i], denied );
 			} else {
-				if( !isBot ) {
+				if ( !isBot ) {
+					svs.clients[i].gamestateAck = GSA_INIT; // resend gamestate, accept first correct serverId
 					// when we get the next packet from a connected client,
 					// the new gamestate will be sent
 					svs.clients[i].state = CS_CONNECTED;
@@ -1019,6 +1020,8 @@ static void SV_FinalMessage( const char *message ) {
 			}
 		}
 	}
+
+	NET_FlushPacketQueue( 99999 );
 }
 
 

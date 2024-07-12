@@ -150,6 +150,12 @@ struct leakyBucket_s {
 	leakyBucket_t *prev, *next;
 };
 
+typedef enum {
+	GSA_INIT = 0,	// gamestate never sent with current sv.serverId
+	GSA_SENT_ONCE,	// gamestate sent once, client can reply with any (messageAcknowledge - gamestateMessageNum) >= 0 and correct serverId
+	GSA_SENT_MANY,	// gamestate sent many times, client must reply with exact gamestateMessageNum == gamestateMessageNum and correct serverId
+	GSA_ACKED		// gamestate acknowledged, no retansmissions needed
+} gameStateAck_t;
 
 typedef struct client_s {
 	clientState_t	state;
@@ -168,6 +174,10 @@ typedef struct client_s {
 	char			lastClientCommandString[MAX_STRING_CHARS];
 	sharedEntity_t	*gentity;			// SV_GentityNum(clientnum)
 	char			name[MAX_NAME_LENGTH];			// extracted from userinfo, high bits masked
+
+	gameStateAck_t	gamestateAck;
+	qboolean		downloading;		// set at "download", reset at gamestate retransmission
+	// int				serverId;		// last acknowledged serverId
 
 	// downloading
 	char			downloadName[MAX_QPATH]; // if not empty string, we are downloading

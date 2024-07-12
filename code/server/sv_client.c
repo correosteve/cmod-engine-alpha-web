@@ -1035,6 +1035,14 @@ static void SV_SendClientGameState( client_t *client ) {
 	}
 	client->state = CS_PRIMED;
 
+	if ( client->gamestateAck == GSA_INIT ) {
+		client->gamestateAck = GSA_SENT_ONCE;
+	} else {
+		client->gamestateAck = GSA_SENT_MANY;
+	}
+
+	client->downloading = qfalse;
+
 #ifndef NEW_FILESYSTEM
 	client->pureAuthentic = qfalse;
 	client->gotCP = qfalse;
@@ -1156,6 +1164,9 @@ void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd ) {
 
 	Com_DPrintf( "Going from CS_PRIMED to CS_ACTIVE for %s\n", client->name );
 	client->state = CS_ACTIVE;
+	client->gamestateAck = GSA_ACKED;
+
+	client->oldServerTime = 0;
 
 	// resend all configstrings using the cs commands since these are
 	// no longer sent when the client is CS_PRIMED
@@ -1296,6 +1307,13 @@ static void SV_BeginDownload_f( client_t *cl ) {
 	// cl->downloadName is non-zero now, SV_WriteDownloadToClient will see this and open
 	// the file itself
 	Q_strncpyz( cl->downloadName, Cmd_Argv(1), sizeof(cl->downloadName) );
+
+	SV_PrintClientStateChange( cl, CS_CONNECTED );
+	cl->state = CS_CONNECTED;
+	cl->gentity = NULL;
+
+	cl->downloading = qtrue;
+	cl->gamestateAck = GSA_SENT_MANY; // expect exact messageAcknowledge next time
 }
 
 
@@ -2594,23 +2612,16 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg ) {
 			Com_DPrintf( "%s: ignoring pre map_restart / outdated client message\n", cl->name );
 			return;
 		}
-		// if we can tell that the client has dropped the last gamestate we sent them, resend it
-		if ( cl->state != CS_ACTIVE && cl->messageAcknowledge - cl->gamestateMessageNum > 0 ) {
-			if ( !SVC_RateLimit( &cl->gamestate_rate, 4, 1000 ) ) {
-				if ( cl->gentity )
-					Com_DPrintf( "%s: dropped gamestate, resending\n", cl->name );
-#ifdef STEF_LOGGING_DEFS
-				Logging_Printf( LP_INFO, "SERVERSTATE",
-					"Sending gamestate for client %i due to primary trigger: state(%i) msg_serverId(%i) sv_serverId(%i) "
-					"restarted_serverId(%i) messageAcknowledge(%i) gamestateMessageNum(%i)\n",
-					(int)( cl - svs.clients ), cl->state, serverId, sv.serverId, sv.restartedServerId, cl->messageAcknowledge,
-					cl->gamestateMessageNum );
-#endif
-				SV_SendClientGameState( cl );
-#ifdef __WASM__
-				SV_SendClientGameState( cl );
-				SV_SendClientGameState( cl );
-#endif
+	} else if ( cl->gamestateAck != GSA_ACKED ) {
+		// early check for gamestate acknowledge
+		if ( serverId == sv.serverId ) {
+			const int delta = cl->messageAcknowledge - cl->gamestateMessageNum;
+			if ( delta == 0 || ( delta > 0 && cl->gamestateAck == GSA_SENT_ONCE ) ) {
+				cl->gamestateAck = GSA_ACKED;
+				// this client has acknowledged the new gamestate so it's
+				// safe to start sending it the real time again
+				Com_DPrintf( "%s acknowledged gamestate with delta %i\n", cl->name, delta );
+				cl->oldServerTime = 0;
 			}
 		}
 		return;
@@ -2642,9 +2653,14 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg ) {
 		}
 	} while ( 1 );
 
-#ifdef STEF_MAP_RESTART_STATIC_SERVERID
-	if ( cl->mapRestartNetchanSequence && cl->messageAcknowledge < cl->mapRestartNetchanSequence ) {
-		// Skip movement commands from before the map restart
+	if ( cl->gamestateAck != GSA_ACKED ) {
+		// late check for gamestate resend
+		if ( cl->state == CS_PRIMED && cl->messageAcknowledge - cl->gamestateMessageNum > 0 ) {
+			Com_DPrintf( "%s: dropped gamestate, resending\n", cl->name );
+			if ( !SVC_RateLimit( &cl->gamestate_rate, 2, 1000 ) ) {
+				SV_SendClientGameState( cl );
+			}
+		}
 		return;
 	}
 #endif
