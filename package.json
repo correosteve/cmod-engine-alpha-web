@@ -8,7 +8,9 @@
   },
   "scripts": {
     "start": "live-server --middleware=/Users/briancullinan/cmod-engine-alpha-web/code/wasm/repack.js docs/ ",
-    "repack": "node /Users/briancullinan/cmod-engine-alpha-web/code/wasm/repack.js"
+    "checksum": "node ./code/wasm/proxy/checksum.js",
+    "proxy": "node ./code/wasm/proxy/web.js",
+    "repack": "node ./code/wasm/repack.js"
   },
   "repository": {
     "type": "git",
