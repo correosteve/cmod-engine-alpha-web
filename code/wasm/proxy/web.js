@@ -259,7 +259,7 @@ function writeVersionFile(time) {
 
 }
 
-var MATCH_PALETTE = /palette\s"(.*?)"\s([0-9]+(,[0-9]+)*)/ig
+const MATCH_PALETTE = /palette\s"(.*?)"\s([0-9]+(,[0-9]+)*)/ig
 
 function makePaletteShader(localName, response) {
   const { execSync } = require('child_process');

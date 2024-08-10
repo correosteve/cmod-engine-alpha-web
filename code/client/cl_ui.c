@@ -792,9 +792,21 @@ static qboolean UI_GetValue( char* value, int valueSize, const char* key ) {
 		return qtrue;
 	}
 
+#ifdef __WASM__
+	if ( !Q_stricmp( key, "trap_GetAsyncFiles" ) ) {
+		Com_sprintf( value, valueSize, "%i", UI_GETASYNCFILES );
+		return qtrue;
+	}
+#endif
+
 	return qfalse;
 }
 
+
+#ifdef __WASM__
+int FS_GetAsyncFiles(const char **files, int max);
+extern qboolean fs_uiSawAsync; 
+#endif
 
 /*
 ====================
@@ -1227,6 +1239,14 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 	case UI_TRAP_GETVALUE:
 		VM_CHECKBOUNDS( uivm, args[1], args[2] );
 		return UI_GetValue( VMA(1), args[2], VMA(3) );
+
+#ifdef __WASM__
+	case UI_GETASYNCFILES:
+		fs_uiSawAsync = qtrue;
+		return FS_GetAsyncFiles(VMA(1), args[2]);
+		// clear list after menu and cgame sees it, otherwise both won't update
+		break;
+#endif
 
 	default:
 		Com_Error( ERR_DROP, "Bad UI system trap: %ld", (long int) args[0] );

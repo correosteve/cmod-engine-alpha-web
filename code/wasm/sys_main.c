@@ -281,6 +281,34 @@ void GLimp_Shutdown( qboolean unloadDLL );
 
 
 #ifndef DEDICATED
+
+glconfig_t *glw_config;
+
+
+void WindowResize(int width, int height) {
+	if ( !gw_minimized /*&& !glw_state.isFullscreen*/ ) {
+		glconfig_t *glConfig = (glconfig_t *)re.GetConfig();
+		cvar_t *aspect = Cvar_Get("r_customAspect", "", 0);
+		glw_config->vidHeight = height;
+		glw_config->vidWidth = width;
+		glw_config->windowAspect = (float)glw_config->vidWidth / (float)glw_config->vidHeight;
+		glConfig->vidWidth = glw_config->vidWidth;
+		glConfig->vidHeight = glw_config->vidHeight;
+		glConfig->windowAspect = glw_config->windowAspect;
+	
+		cls.glconfig = *glConfig;
+
+		Cvar_SetIntegerValue("r_customWidth", glw_config->vidWidth);
+		Cvar_SetIntegerValue("r_customHeight", glw_config->vidHeight);
+		Cvar_SetValueSafe("r_customAspect", glw_config->windowAspect);
+		cvar_modifiedFlags |= CVAR_MODIFIED;
+		aspect->modified = qtrue;
+		aspect->modificationCount++;
+	}
+}
+						
+
+
 /*
 ===============
 GLimp_Init
@@ -325,10 +353,13 @@ void GLimp_Init( glconfig_t *config )
 	config->depthBits = 24;
 	config->stencilBits = 8;
 	config->isFullscreen = qfalse;
+	config->windowAspect = (float)config->vidWidth / (float)config->vidHeight;
 
   // These values force the UI to disable driver selection
   config->driverType = GLDRV_ICD;
   config->hardwareType = GLHW_GENERIC;
+
+	glw_config = config;
 
   Key_ClearStates();
 

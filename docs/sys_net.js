@@ -711,7 +711,7 @@ function CL_Download(cmd, name, auto) {
         if(cmdStr == 'dlmap') {
           Cbuf_AddText(stringToAddress(` ; fs_restart ; vid_restart ; `))
         } else {
-          Cbuf_AddText(stringToAddress(` ; wait 300 ; fs_restart ; ${cmdStr} ${mapname} ; `))
+          Cbuf_AddText(stringToAddress(` ; wait 100 ; fs_restart ; ${cmdStr} ${mapname} ; `))
         }
       }
     } catch (e) {

@@ -443,6 +443,14 @@ static qboolean CL_GetValue( char* value, int valueSize, const char* key ) {
 		return qtrue;
 	}
 
+
+#ifdef __WASM__
+	if ( !Q_stricmp( key, "trap_GetAsyncFiles" ) ) {
+		Com_sprintf( value, valueSize, "%i", CG_GETASYNCFILES );
+		return qtrue;
+	}
+#endif
+
 	return qfalse;
 }
 
@@ -455,6 +463,12 @@ static void CL_ForceFixedDlights( void ) {
 		Cvar_CheckRange( cv, "1", "2", CV_INTEGER );
 	}
 }
+
+
+#ifdef __WASM__
+int FS_GetAsyncFiles(const char **files, int max);
+extern qboolean fs_cgameSawAsync;
+#endif
 
 
 /*
@@ -853,6 +867,13 @@ static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_TRAP_GETVALUE:
 		VM_CHECKBOUNDS( cgvm, args[1], args[2] );
 		return CL_GetValue( VMA(1), args[2], VMA(3) );
+
+#ifdef __WASM__
+	case CG_GETASYNCFILES:
+		fs_cgameSawAsync = qtrue;
+		return FS_GetAsyncFiles(VMA(1), args[2]);
+		break;
+#endif
 
 	default:
 		Com_Error( ERR_DROP, "Bad cgame system trap: %ld", (long int) args[0] );

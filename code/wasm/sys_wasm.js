@@ -16,8 +16,8 @@ function initEnvironment(ENGINE) {
 	}
 	if(!ENV.memory) {
 		ENV.memory = new WebAssembly.Memory({ 
-			initial: 2100, 
-			maximum: 16000,
+			initial: 3200, 
+			maximum: 32000,
 			/* 'shared': true */
 		})
 	}
@@ -166,6 +166,7 @@ async function initEngine(program) {
 async function initBrowser() {
 	const viewport = document.getElementById('viewport-frame')
 	GL.canvas = document.getElementsByTagName('canvas')[0]
+	GL.canvas2D = document.getElementsByTagName('canvas')[1]
 	const ENGINE = initEnvironment({
 		SYS: SYS,
 		GL: GL,
