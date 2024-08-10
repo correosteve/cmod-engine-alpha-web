@@ -1218,7 +1218,7 @@ void CL_MapLoading( void ) {
 		Com_Memset( cls.updateInfoString, 0, sizeof( cls.updateInfoString ) );
 		Com_Memset( clc.serverMessage, 0, sizeof( clc.serverMessage ) );
 		Com_Memset( &cl.gameState, 0, sizeof( cl.gameState ) );
-		clc.lastPacketSentTime = -9999;
+		clc.lastPacketSentTime = cls.realtime - 9999;  // send packet immediately
 		cls.framecount++;
 		SCR_UpdateScreen();
 	} else {
@@ -1420,9 +1420,7 @@ qboolean CL_Disconnect( qboolean showMainMenu ) {
 	// send it a few times in case one is dropped
 	if ( cls.state >= CA_CONNECTED && cls.state != CA_CINEMATIC && !clc.demoplaying ) {
 		CL_AddReliableCommand( "disconnect", qtrue );
-		CL_WritePacket();
-		CL_WritePacket();
-		CL_WritePacket();
+		CL_WritePacket( 2 );
 	}
 
 	CL_ClearState();
@@ -1677,9 +1675,7 @@ void CL_Disconnect_f( void ) {
 			}
 			Cvar_Set( "com_errorMessage", "" );
 			if ( !CL_Disconnect( qfalse ) ) { // restart client if not done already
-//#ifndef __WASM__
 				CL_FlushMemory();
-//#endif
 			}
 			if ( uivm ) {
 				VM_Call( uivm, 1, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
@@ -2294,9 +2290,7 @@ extern	qboolean	first_click;
 	// set pure checksums
 	CL_SendPureChecksums();
 
-	CL_WritePacket();
-	CL_WritePacket();
-	CL_WritePacket();
+	CL_WritePacket( 2 );
 }
 
 

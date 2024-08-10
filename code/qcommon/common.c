@@ -688,7 +688,7 @@ void Com_StartupVariable( const char *match ) {
 
 	for ( i = 0; i < com_numConsoleLines; i++ ) {
 		Cmd_TokenizeString( com_consoleLines[i] );
-		if ( Q_stricmpn( Cmd_Argv( 0 ), "set", 3 ) ) {
+		if ( Q_stricmp( Cmd_Argv( 0 ), "set" ) ) {
 			continue;
 		}
 
@@ -3029,7 +3029,6 @@ int Com_EventLoop( void ) {
 		case SE_JOYSTICK_AXIS:
 			CL_JoystickEvent( ev.evValue, ev.evValue2, ev.evTime );
 			break;
-#endif // !DEDICATED
 #ifdef __WASM__
 		case SE_FINGER_DOWN:
 			CL_KeyEvent( ev.evValue, qtrue, ev.evTime, ev.evValue2 );
@@ -4795,7 +4794,7 @@ void Com_Frame( qboolean noDelay ) {
 	}
 #endif
 
-	NET_FlushPacketQueue();
+	NET_FlushPacketQueue( 0 );
 
 	//
 	// report timing information

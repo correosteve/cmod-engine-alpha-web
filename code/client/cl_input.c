@@ -769,7 +769,7 @@ During normal gameplay, a client packet will contain something like:
 
 ===================
 */
-void CL_WritePacket( void ) {
+void CL_WritePacket( int repeat ) {
 	msg_t		buf;
 	byte		data[ MAX_MSGLEN_BUF ];
 	int			i, j, n;
@@ -902,7 +902,7 @@ void CL_WritePacket( void ) {
 		CL_Netchan_Transmit( &clc.netchan, &buf );
 	} else {
 		CL_Netchan_Enqueue( &clc.netchan, &buf, repeat + 1 );
-		NET_FlushPacketQueue( 0 );
+		NET_FlushPacketQueue( 1 );
 	}
 }
 
@@ -936,7 +936,7 @@ void CL_SendCmd( void ) {
 		return;
 	}
 
-	CL_WritePacket();
+	CL_WritePacket( 0 );
 }
 
 

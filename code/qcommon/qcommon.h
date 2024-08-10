@@ -217,8 +217,8 @@ typedef struct {
 
 void		NET_Init( void );
 void		NET_Shutdown( void );
-void		NET_FlushPacketQueue( int time_diff );
-void		NET_QueuePacket( netsrc_t sock, int length, const void *data, const netadr_t *to, int offset );
+void		NET_FlushPacketQueue( int index );
+void		NET_QueuePacket( int index, netsrc_t sock, int length, const void *data, const netadr_t *to, int offset );
 void		NET_SendPacket( netsrc_t sock, int length, const void *data, const netadr_t *to );
 void		QDECL NET_OutOfBandPrint( netsrc_t net_socket, const netadr_t *adr, const char *format, ...) __attribute__ ((format (printf, 3, 4)));
 void		NET_OutOfBandCompress( netsrc_t sock, const netadr_t *adr, const byte *data, int len );
