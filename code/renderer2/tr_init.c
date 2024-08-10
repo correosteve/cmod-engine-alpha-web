@@ -1605,6 +1605,13 @@ static void RE_EndRegistration( void ) {
 	}
 }
 
+#ifdef __WASM__
+void R_FinishImage3( image_t *, byte *pic, GLenum picFormat, int numMips );
+void RE_FinishImage3(void *img, byte *pic, int picFormat, int numMips) {
+	R_FinishImage3((image_t *)img, pic, picFormat, numMips);
+}
+#endif
+
 
 /*
 @@@@@@@@@@@@@@@@@@@@@
@@ -1679,6 +1686,9 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 
 #ifdef __WASM__
 	re.InitShaders = R_InitShaders;
+#endif
+#if defined(__WASM__)
+	re.FinishImage3 = RE_FinishImage3;
 #endif
 
 	return &re;

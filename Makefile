@@ -433,12 +433,13 @@ OPTIMIZE        = -O3 -ffast-math
 SHLIBEXT = wasm
 SHLIBCFLAGS = -fvisibility=hidden $(OPTIMIZE)
 SHLIBLDFLAGS = -Wl,--no-entry $(LDFLAGS) \
-  -Wl,--export=malloc  \
+  -Wl,--export=malloc -Wl,--export=s_knownSfx \
 	-Wl,--export=stderr -Wl,--export=stdout \
   -Wl,--allow-undefined-file=code/wasm/wasm.syms
 
 #  -fno-builtin -nostdlib 
 # -shared not supported
+#  -Wl,--export=CL_Try_LoadJPG,--export=CL_Fail_LoadJPG \
 
 CLIENT_LDFLAGS  = $(LDFLAGS) code/wasm/stack_ops.S \
 	-Wl,--export=sprintf       -Wl,--export=malloc  \
@@ -447,17 +448,17 @@ CLIENT_LDFLAGS  = $(LDFLAGS) code/wasm/stack_ops.S \
 	-Wl,--export=errno,--export=R_FindPalette \
   -Wl,--export=Key_ClearStates,--export=Key_GetCatcher \
   -Wl,--export=Key_SetCatcher,--export=CL_PacketEvent \
-  -Wl,--export=CL_Try_LoadJPG,--export=CL_Fail_LoadJPG \
-  -Wl,--export=s_soundStarted,--export=s_soundMuted \
+  -Wl,--export=s_soundStarted,--export=s_soundMuted,--export=s_knownSfx \
   -Wl,--export=stackRestore,--export=stackSave,--export=stackAlloc \
   -Wl,--export=dma,--export=S_SoundInfo,--export=Cbuf_ExecuteText \
-  -Wl,--export=Cbuf_AddText,--export=gw_minimized \
-  -Wl,--export=gw_active,--export=Z_Free \
+  -Wl,--export=Cbuf_AddText,--export=gw_minimized,--export=FS_RecordFile \
+  -Wl,--export=gw_active,--export=Z_Free,--export=CL_R_FinishImage3 \
   -Wl,--export=CL_NextDownload,--export=com_fullyInitialized \
   -Wl,--export=Z_Malloc,--export=Sys_QueEvent,--export=MSG_Init \
   -Wl,--export=Com_RunAndTimeServerPacket,--export=Com_Frame \
   -Wl,--export=Cvar_VariableValue,--export=Cvar_VariableIntegerValue \
   -Wl,--export=Cvar_VariableString,--export=Cvar_Get \
+  -Wl,--export=cvar_modifiedFlags,--export=WindowResize \
   -Wl,--export=Cvar_Set,--export=Cvar_SetValue \
   -Wl,--export=Cvar_SetIntegerValue,--export=Cvar_CheckRange \
   -Wl,--export=FS_ReadFile,--export=VM_Call \

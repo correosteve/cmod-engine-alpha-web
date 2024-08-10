@@ -3804,6 +3804,16 @@ static void CL_SetScaling( float factor, int captureWidth, int captureHeight ) {
 	cls.captureHeight = captureHeight;
 }
 
+#ifdef __WASM__
+
+void CL_R_FinishImage3( void *img, byte *pic, int picFormat, int numMips ) {
+	if(re.FinishImage3) {
+		re.FinishImage3(img, pic, picFormat, numMips);
+	}
+}
+
+#endif
+
 
 /*
 ============

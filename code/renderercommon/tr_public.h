@@ -132,6 +132,9 @@ typedef struct {
 #ifdef __WASM__
 	void	(*InitShaders)( void );
 #endif
+#if defined(__WASM__)
+	void	(*FinishImage3)(void *, byte *pic, int picFormat, int numMips);
+#endif
 
 } refexport_t;
 
