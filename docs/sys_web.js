@@ -9,7 +9,7 @@ function getQueryCommands() {
 		'quake3e_web',
 		'+set', 'fs_basepath', '/base',
 		'+set', 'fs_homepath', '/home',
-//		'+set', 'sv_pure', '0', // require for now, TODO: server side zips
+		'+set', 'sv_pure', '0', // require for now, TODO: server side zips
 		'+set', 'r_mode', '-2',
 		'+set', 'net_socksServer', window.location.hostname || '',
 		'+set', 'net_socksPort', window.location.port 
@@ -37,8 +37,9 @@ function getQueryCommands() {
 		// FBO shows up all black and textures don't bind, 
 		//   but this should work in theory with WebGL
 		'+set', 'r_ext_framebuffer_object', '0',
+		'+set', 'r_ext_direct_state_access', '0',
 		// Cause of FBO bug above?
-		'+set', 'r_overBrightBits', '1',
+		'+set', 'r_overBrightBits', '0',
 		// this was replaced in QuakeJS, instead of replacing, just change cvar
 		'+set', 'r_drawBuffer', 'GL_NONE',
 		'+set', 'r_ext_texture_filter_anisotropic', '1',
@@ -46,11 +47,12 @@ function getQueryCommands() {
 		// save time loading???
 		'+set', 'r_vertexLight', '0',
 		'+set', 'r_dynamiclight', '1',
+		
 		//'+set', 'r_ext_framebuffer_multisample', '0',
 		// this prevents lightmap from being wrong when switching maps
 		//   renderer doesn't restart between maps, but BSP loading updates
 		//   textures with lightmap by default, so this keeps them separate
-		//'+set', 'r_mergeLightmaps', '0',
+		'+set', 'r_mergeLightmaps', '0',
 		//'+set', 'r_deluxeMapping', '0',
 		//'+set', 'r_normalMapping', '0',
 		//'+set', 'r_specularMapping', '0',
@@ -62,6 +64,7 @@ function getQueryCommands() {
 		'+set', 'r_fullscreen', window.fullscreen ? '1' : '0',
 		'+set', 'r_customHeight', '' + GL.canvas.clientHeight || 0,
 		'+set', 'r_customWidth', '' + GL.canvas.clientWidth || 0,
+		'+set', 'r_customAspect', '' + (GL.canvas.clientWidth / GL.canvas.clientHeight) || 0,
 	])
 	// meant to do this a lot sooner, with a download, we can just package
 	//   whatever pk3/autoexec we want with the game.
@@ -217,23 +220,24 @@ function Sys_Return() {
 	if(returnUrl) {
 		window.location = returnUrl
 	}
+	// brian cullinan added this feature for Tig
 	// client mode
-	let reconnect = addressToString(Cvar_VariableString(stringToAddress('cl_reconnectArgs')))
-	if(reconnect) {
-		window.location = '/games/' + reconnect
-	}
+	//let reconnect = addressToString(Cvar_VariableString(stringToAddress('cl_reconnectArgs')))
+	//if(reconnect) {
+	//	window.location = '/games/' + reconnect
+	//}
 	// single player mode
-	let mapname = addressToString(Cvar_VariableString(stringToAddress('mapname')))
-	if(mapname && mapname != 'nomap') {
-		window.location = '/maps/' + mapname
-	}
+	//let mapname = addressToString(Cvar_VariableString(stringToAddress('mapname')))
+	//if(mapname && mapname != 'nomap') {
+	//	window.location = '/maps/' + mapname
+	//}
 }
 
 
 
 function Sys_Exit(code) {
 	SYS.exited = true
-	GLimp_Shutdown()
+	GLimp_Shutdown(true)
 	NET_Shutdown()
 	if(SYS.frameInterval) {
 		clearInterval(SYS.frameInterval)
@@ -241,6 +245,9 @@ function Sys_Exit(code) {
 	}
 	if(code == 0) {
 		Sys_Return()
+	}
+	if(	GL.canvas ) {
+		GL.canvas.remove()
 	}
 }
 

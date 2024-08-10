@@ -183,6 +183,33 @@ void CL_Netchan_Transmit( netchan_t *chan, msg_t* msg ) {
 
 
 /*
+===============
+CL_Netchan_Enqueue
+================
+*/
+void CL_Netchan_Enqueue( netchan_t *chan, msg_t* msg, int times ) {
+	int i;
+
+	// make sure we send all pending fragments to get correct chan->outgoingSequence
+	while ( CL_Netchan_TransmitNextFragment( chan ) ) {
+		;
+	}
+
+#ifndef ELITEFORCE
+	if ( chan->compat ) {
+		CL_Netchan_Encode( msg );
+	}
+#endif
+
+	for ( i = 0; i < times; i++ ) {
+		Netchan_Enqueue( chan, msg->cursize, msg->data );
+	}
+
+	chan->outgoingSequence++;
+}
+
+
+/*
 =================
 CL_Netchan_Process
 =================

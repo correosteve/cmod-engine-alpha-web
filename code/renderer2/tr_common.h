@@ -70,8 +70,10 @@ typedef struct image_s {
 
 	imgType_t	type;
 	imgFlags_t	flags;
-	int palette;
-	GLuint paletteImage;
+	int			lastTimeUsed;
+	char variables[MAX_QPATH];
+	struct image_s *palette;
+	struct image_s *alternate;
 } image_t;
 
 typedef struct palette_s {

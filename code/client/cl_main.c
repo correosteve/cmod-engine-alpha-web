@@ -2294,8 +2294,6 @@ extern	qboolean	first_click;
 }
 
 
-#ifndef __WASM__
-
 /*
 =================
 CL_BeginDownload
@@ -2330,7 +2328,6 @@ static void CL_BeginDownload( const char *localName, const char *remoteName ) {
 	CL_AddReliableCommand( va("download %s", remoteName), qfalse );
 }
 
-#endif
 
 /*
 =================
@@ -3909,9 +3906,11 @@ static void CL_InitRef( void ) {
 	rimp.CIN_RunCinematic = CIN_RunCinematic;
 
 	rimp.CL_WriteAVIVideoFrame = CL_WriteAVIVideoFrame;
+#ifndef __WASM__
 	rimp.CL_SaveJPGToBuffer = CL_SaveJPGToBuffer;
 	rimp.CL_SaveJPG = CL_SaveJPG;
 	rimp.CL_LoadJPG = CL_LoadJPG;
+#endif
 
 	rimp.CL_IsMinimized = CL_IsMininized;
 	rimp.CL_SetScaling = CL_SetScaling;

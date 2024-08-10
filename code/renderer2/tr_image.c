@@ -2106,7 +2106,12 @@ R_CreateImage2
 This is the only way any image_t are created
 ================
 */
-static image_t *R_CreateImage2( const char *name, byte *pic, int width, int height, GLenum picFormat, int numMips, imgType_t type, imgFlags_t flags, int internalFormat ) {
+#ifdef __WASM__
+static image_t *R_CreateImage2( const char *name, byte *pic, int width, int height, GLenum picFormat, int numMips, imgType_t type, imgFlags_t flags, int internalFormat, image_t *existing )
+#else
+static image_t *R_CreateImage2( const char *name, byte *pic, int width, int height, GLenum picFormat, int numMips, imgType_t type, imgFlags_t flags, int internalFormat )
+#endif
+{
 	byte       *resampledBuffer = NULL;
 	image_t    *image;
 	qboolean    isLightmap = qfalse, scaled = qfalse;
@@ -2129,6 +2134,9 @@ static image_t *R_CreateImage2( const char *name, byte *pic, int width, int heig
 		isLightmap = qtrue;
 	}
 
+#ifdef __WASM__
+	if(!existing) {
+#endif
 	if ( tr.numImages == MAX_DRAWIMAGES ) {
 		ri.Error( ERR_DROP, "R_CreateImage: MAX_DRAWIMAGES hit");
 	}
@@ -2145,6 +2153,13 @@ static image_t *R_CreateImage2( const char *name, byte *pic, int width, int heig
 
 	image->width = width;
 	image->height = height;
+
+#ifdef __WASM__
+	} else {
+		image = existing;
+		qglGenTextures(1, &image->texnum);
+	}
+#endif
 	if (flags & IMGFLAG_CLAMPTOEDGE)
 		glWrapClampMode = GL_CLAMP_TO_EDGE;
 	else
@@ -2240,9 +2255,15 @@ static image_t *R_CreateImage2( const char *name, byte *pic, int width, int heig
 
 	GL_CheckErrors();
 
+#ifdef __WASM__
+	if(!existing) {
+#endif
 	hash = generateHashValue(name);
 	image->next = hashTable[hash];
 	hashTable[hash] = image;
+#ifdef __WASM__
+	}
+#endif
 
 	return image;
 }
@@ -2313,7 +2334,7 @@ Q_EXPORT byte *R_FindPalette(const char *name) {
 
 
 
-void R_FinishImage3( image_t *, GLenum picFormat, int numMips );
+void R_FinishImage3( image_t *, byte *pic, GLenum picFormat, int numMips );
 /*
 ================
 R_CreateImage2
@@ -2344,7 +2365,7 @@ static image_t *R_CreateImage3( const char *name, byte *pic, GLenum picFormat, i
 	strcpy( image->imgName, name );
 	image->width = 0;
 	image->height = 0;
-	qglGenTextures(1, &image->texnum);
+	//qglGenTextures(1, &image->texnum);
 	tr.numImages++;
 
 	image->type = type;
@@ -2359,19 +2380,16 @@ static image_t *R_CreateImage3( const char *name, byte *pic, GLenum picFormat, i
 	//if (!internalFormat)
 	//	internalFormat = RawImage_GetFormat(pic, width * height, picFormat, isLightmap, image->type, image->flags);
 
-	image->internalFormat = PixelDataFormatFromInternalFormat(internalFormat);
+	//image->internalFormat = PixelDataFormatFromInternalFormat(internalFormat);
 
-	if(image->width > 1 && image->height > 1) {
-		R_FinishImage3( image, picFormat, 0 );
-	}
+	//if(image->width > 1 && image->height > 1) {
+	//	R_FinishImage3( image, pic, picFormat, 0 );
+	//}
 	// TODO: move to loadImage in sys_emgl.js
-	else {
-		image->palette = (pic[0] << 24) + (pic[1] << 16) + (pic[2] << 8) + pic[3];
-		image->paletteImage = image->texnum;
-		//image->paletteImage = R_CreateImage2(
-		//	va("*pal%i-%i-%i-%i", ), 
-		//	pic, 16, 16, GL_RGBA8, IMGTYPE_COLORALPHA, 0, IMGFLAG_NONE, GL_RGBA8);
-	}
+	//else {
+	//	image->palette = (pic[0] << 24) + (pic[1] << 16) + (pic[2] << 8) + pic[3];
+	//	image->paletteImage = image->texnum;
+	//}
 
 	hash = generateHashValue(name);
 	image->next = hashTable[hash];
@@ -2380,84 +2398,19 @@ static image_t *R_CreateImage3( const char *name, byte *pic, GLenum picFormat, i
 	return image;
 }
 
+byte *R_LoadAlternateImage( byte *pic, int width, int height );
+byte *R_LoadAlternateImageVariables( byte *pic, int width, int height, const char *variables);
 
-Q_EXPORT void R_FinishImage3( image_t *image, GLenum picFormat, int numMips ) {
-	int      glWrapClampMode, mipWidth, mipHeight, miplevel;
-	qboolean mipmap = !!(image->flags & IMGFLAG_MIPMAP);
-	qboolean lastMip = qfalse;
-	qboolean cubemap = qfalse;
-	GLenum   textureTarget = cubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D;
 
-	image->uploadWidth = image->width;
-	image->uploadHeight = image->height;
+void R_FinishImage3( image_t *image, byte *pic, GLenum picFormat, int numMips ) {
 
-	// Allocate texture storage so we don't have to worry about it later.
-	mipWidth = image->width;
-	mipHeight = image->height;
-	miplevel = 0;
-	do
-	{
-		lastMip = !mipmap || (mipWidth == 1 && mipHeight == 1);
-		if (cubemap)
-		{
-			int i;
-
-			for (i = 0; i < 6; i++)
-				qglTextureImage2DEXT(image->texnum, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, miplevel, image->internalFormat, mipWidth, mipHeight, 0, image->internalFormat, GL_UNSIGNED_BYTE, NULL);
-		}
-		else
-		{
-			qglTextureImage2DEXT(image->texnum, GL_TEXTURE_2D, miplevel, image->internalFormat, mipWidth, mipHeight, 0, image->internalFormat, GL_UNSIGNED_BYTE, NULL);
-		}
-
-		// Upload data.
-
-		qglTextureSubImage2DEXT(image->texnum, GL_TEXTURE_2D, miplevel, 0, 0, mipWidth, mipHeight, image->internalFormat, picFormat == GL_RGBA16 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_BYTE, 0);
-
-		mipWidth  = MAX(1, mipWidth >> 1);
-		mipHeight = MAX(1, mipHeight >> 1);
-		miplevel++;
-	}
-	while (!lastMip);
-
-	if (image->flags & IMGFLAG_CLAMPTOEDGE)
-		glWrapClampMode = GL_CLAMP_TO_EDGE;
-	else
-		glWrapClampMode = GL_REPEAT;
-
-	// Set all necessary texture parameters.
-	qglTextureParameterfEXT(image->texnum, textureTarget, GL_TEXTURE_WRAP_S, glWrapClampMode);
-	qglTextureParameterfEXT(image->texnum, textureTarget, GL_TEXTURE_WRAP_T, glWrapClampMode);
-
-	if (cubemap)
-		qglTextureParameteriEXT(image->texnum, textureTarget, GL_TEXTURE_WRAP_R, glWrapClampMode);
-
-	if (textureFilterAnisotropic && !cubemap)
-		qglTextureParameteriEXT(image->texnum, textureTarget, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-			mipmap ? (GLint)Com_Clamp(1, maxAnisotropy, r_ext_max_anisotropy->integer) : 1);
-
-	switch(image->internalFormat)
-	{
-		case GL_DEPTH_COMPONENT:
-		case GL_DEPTH_COMPONENT16_ARB:
-		case GL_DEPTH_COMPONENT24_ARB:
-		case GL_DEPTH_COMPONENT32_ARB:
-			// Fix for sampling depth buffer on old nVidia cards.
-			// from http://www.idevgames.com/forums/thread-4141-post-34844.html#pid34844
-			qglTextureParameterfEXT(image->texnum, textureTarget, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-			qglTextureParameterfEXT(image->texnum, textureTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			qglTextureParameterfEXT(image->texnum, textureTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			break;
-		default:
-			qglTextureParameterfEXT(image->texnum, textureTarget, GL_TEXTURE_MIN_FILTER, mipmap ? gl_filter_min : GL_LINEAR);
-			qglTextureParameterfEXT(image->texnum, textureTarget, GL_TEXTURE_MAG_FILTER, mipmap ? gl_filter_max : GL_LINEAR);
-			break;
-	}
-
-	GL_CheckErrors();
+	R_CreateImage2(image->imgName, pic, image->width, image->height, picFormat, 0, image->type, image->flags, image->internalFormat, image);
 
 }
 #endif
+
+
+
 
 
 /*
@@ -2469,7 +2422,7 @@ Wrapper for R_CreateImage2(), for the old parameters.
 */
 image_t *R_CreateImage(const char *name, byte *pic, int width, int height, imgType_t type, imgFlags_t flags, int internalFormat)
 {
-	return R_CreateImage2(name, pic, width, height, GL_RGBA8, 0, type, flags, internalFormat);
+	return R_CreateImage2(name, pic, width, height, GL_RGBA8, 0, type, flags, internalFormat, NULL);
 }
 
 
@@ -2489,7 +2442,7 @@ typedef struct
 	void (*ImageLoader)( const char *, unsigned char **, int *, int * );
 } imageExtToLoaderMap_t;
 
-#ifdef __WASM__
+#if 0 //def __WASM__
 void R_LoadJPG_Remote( const char *name, byte **pic, int *width, int *height );
 void R_LoadPNG_Remote( const char *name, byte **pic, int *width, int *height );
 #endif
@@ -2499,15 +2452,14 @@ void R_LoadPNG_Remote( const char *name, byte **pic, int *width, int *height );
 static const imageExtToLoaderMap_t imageLoaders[ ] =
 {
 	{ "tga",  R_LoadTGA },
-#ifndef __WASM__
+#ifndef __WASM__ // because it has these longjmps for error handling I would have to rewrite
 	{ "png",  R_LoadPNG },
-#endif
 	{ "jpg",  R_LoadJPG },
 	{ "jpeg", R_LoadJPG },
-//#endif
 	{ "pcx",  R_LoadPCX },
 	{ "bmp",  R_LoadBMP }
-#ifdef __WASM__
+#endif
+#if 0 //def __WASM__
 	,{ "png",  R_LoadPNG_Remote },
 	{ "jpg",  R_LoadJPG_Remote },
 	{ "jpeg", R_LoadJPG_Remote }
@@ -2570,10 +2522,10 @@ Loads any of the supported image types into a canonical
 32 bit format.
 =================
 */
-#ifdef __WASM__
-static void R_LoadImage( const char *name, byte **pic, int *width, int *height, GLenum *picFormat, int *numMips, qboolean *dynamicLoad )
+#if 0 //def __WASM__
+void R_LoadImage( const char *name, byte **pic, int *width, int *height, GLenum *picFormat, int *numMips, qboolean *dynamicLoad )
 #else
-static void R_LoadImage( const char *name, byte **pic, int *width, int *height, GLenum *picFormat, int *numMips )
+void R_LoadImage( const char *name, byte **pic, int *width, int *height, GLenum *picFormat, int *numMips )
 #endif
 {
 	qboolean orgNameFailed = qfalse;
@@ -2626,7 +2578,7 @@ static void R_LoadImage( const char *name, byte **pic, int *width, int *height, 
 			{
 				// Load
 				imageLoaders[ i ].ImageLoader( localName, pic, width, height );
-#ifdef __WASM__
+#if 0 //def __WASM__
 				if(imageLoaders[ i ].ImageLoader == R_LoadPNG_Remote
 					|| imageLoaders[ i ].ImageLoader == R_LoadJPG_Remote
 				) {
@@ -2642,7 +2594,7 @@ static void R_LoadImage( const char *name, byte **pic, int *width, int *height, 
 		// A loader was found
 		if( i < numImageLoaders )
 		{
-#ifdef __WASM__
+#if 0 //def __WASM__
 			if(imageLoaders[ i ].ImageLoader == R_LoadPNG_Remote
 				|| imageLoaders[ i ].ImageLoader == R_LoadJPG_Remote
 			) {
@@ -2679,7 +2631,7 @@ static void R_LoadImage( const char *name, byte **pic, int *width, int *height, 
 		// Load
 		imageLoaders[ i ].ImageLoader( altName, pic, width, height );
 
-#ifdef __WASM__
+#if 0 //def __WASM__
 		if(imageLoaders[ i ].ImageLoader == R_LoadPNG_Remote
 			|| imageLoaders[ i ].ImageLoader == R_LoadJPG_Remote
 		) {
@@ -2706,7 +2658,7 @@ static void R_LoadImage( const char *name, byte **pic, int *width, int *height, 
 
 
 #ifdef __WASM__
-extern  cvar_t  *r_paletteMode;
+void R_LoadRemote( const char *name, int *width, int *height, image_t *image );
 #endif
 
 
@@ -2727,6 +2679,7 @@ image_t	*R_FindImageFile( const char *name, imgType_t type, imgFlags_t flags )
 	int picNumMips;
 	long	hash;
 	imgFlags_t checkFlagsTrue, checkFlagsFalse;
+	char  paletteName[ MAX_QPATH ];
 
 	if (!name) {
 		return NULL;
@@ -2749,26 +2702,43 @@ image_t	*R_FindImageFile( const char *name, imgType_t type, imgFlags_t flags )
 		}
 	}
 
+	byte* pal = R_FindPalette(name);
+	image_t *palette = NULL;
+	if(pal) {
+		Q_strncpy(paletteName, (char *)va("*pal%i-%i-%i-%i", pal[0], pal[1], pal[2], pal[3]), sizeof(paletteName));
+		palette = R_CreateImage(paletteName, pal, 16, 16, IMGTYPE_NORMAL, IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP, 0 );
+	}
+
+
+	if(Q_stristr(name, "*pal")) {
+		return palette;
+	}
+
 	//
 	// load the pic from disk
 	//
-#ifdef __WASM__
-//	Com_Printf("img: %s\n", name);
-	qboolean dynamicLoad = qfalse;
-	R_LoadImage( name, &pic, &width, &height, &picFormat, &picNumMips, &dynamicLoad );
-	//dynamicLoad = qfalse;
-#else
+
 	R_LoadImage( name, &pic, &width, &height, &picFormat, &picNumMips );
-#endif
 	if ( pic == NULL ) {
+
+		if(palette) { // because we know it's supposed to be there it's listed in a file
+#ifdef __WASM__
+			// create a placeholder image for async loading
+			image = R_CreateImage3( ( char * ) name, pic, picFormat, picNumMips, type, flags & ~IMGFLAG_MIPMAP & ~IMGFLAG_PICMIP, 0 );
+			image->palette = palette;
+			//Q_strncpyz(image->variables, variables, MAX_QPATH);
+			R_LoadRemote(name, &image->width, &image->height, image); // initiate async load
+			return image;
+#else
+			return palette;
+#endif
+		}
+
 		return NULL;
 	}
 
 	checkFlagsTrue = IMGFLAG_PICMIP | IMGFLAG_MIPMAP | IMGFLAG_GENNORMALMAP;
 	checkFlagsFalse = IMGFLAG_CUBEMAP;
-#ifdef __WASM__
-	if(!dynamicLoad) // not done from emgl.js but internally instead
-#endif
 	if (r_normalMapping->integer && (picFormat == GL_RGBA8) && (type == IMGTYPE_COLORALPHA) &&
 		((flags & checkFlagsTrue) == checkFlagsTrue) && !(flags & checkFlagsFalse))
 	{
@@ -2887,18 +2857,9 @@ image_t	*R_FindImageFile( const char *name, imgType_t type, imgFlags_t flags )
 			flags &= ~IMGFLAG_MIPMAP;
 	}
 
-#ifdef __WASM__
-	// skip this entirely and upload directly to openGL then
-	//   insert the image handle in image->texnum for future use
-	// by this point we think the image is out there so register it in 
-	//   the system, then we can update the glBind-ing when it loads async
-	if(dynamicLoad) { // done from emgl.js
-		image = R_CreateImage3( ( char * ) name, pic, picFormat, picNumMips, type, 
-			flags & 	~IMGFLAG_MIPMAP & ~IMGFLAG_PICMIP, GL_RGBA );
-		return image;
-	}
-#endif
-	image = R_CreateImage2( ( char * ) name, pic, width, height, picFormat, picNumMips, type, flags, 0 );
+	// before createimage changes things, make copies
+	image = R_CreateImage2( ( char * ) name, pic, width, height, picFormat, picNumMips, type, flags, 0, NULL );
+	image->palette = palette;
 	ri.Free( pic );
 
 	return image;
