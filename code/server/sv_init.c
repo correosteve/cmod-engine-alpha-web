@@ -590,7 +590,7 @@ void SV_SpawnServer( const char *mapname, qboolean killBots ) {
 	sv.pure = sv_pure->integer;
 
 	// get a new checksum feed and restart the file system
-	srand( Com_Milliseconds() );
+	srand( Sys_Milliseconds() );
 	Com_RandomBytes( (byte*)&sv.checksumFeed, sizeof( sv.checksumFeed ) );
 #ifndef NEW_FILESYSTEM
 	FS_Restart( sv.checksumFeed );

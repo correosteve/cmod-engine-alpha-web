@@ -1675,7 +1675,9 @@ void CL_Disconnect_f( void ) {
 			}
 			Cvar_Set( "com_errorMessage", "" );
 			if ( !CL_Disconnect( qfalse ) ) { // restart client if not done already
+//#ifndef __WASM__
 				CL_FlushMemory();
+//#endif
 			}
 			if ( uivm ) {
 				VM_Call( uivm, 1, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
@@ -2256,30 +2258,20 @@ static void CL_DownloadsComplete( void ) {
 	// this will also (re)load the UI
 	// if this is a local client then only the client part of the hunk
 	// will be cleared, note that this is done after the hunk mark has been set
-	//if ( !com_sv_running->integer )
-#ifndef __WASM__
 #ifdef NEW_FILESYSTEM
 	CL_SystemInfoChanged( qfalse );
 	if ( !FS_ConditionalRestart( clc.checksumFeed, qfalse ) ) {
 	}
 	CL_FlushMemory();
-#endif
 #else
-extern	qboolean	first_click;
-
-	re.InitShaders();
-	if(!first_click) {
-		S_Shutdown();
-		cls.soundStarted = qtrue;
-		S_Init();
-		cls.soundRegistered = qtrue;
-		S_BeginRegistration();
-	}
+	CL_FlushMemory();
 #endif
+
 
 
 	// initialize the CGame
 	cls.cgameStarted = qtrue;
+
 	CL_InitCGame();
 
 	if ( clc.demofile == FS_INVALID_HANDLE ) {

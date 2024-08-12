@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "tr_local.h"
 
+void R_AddPalette(const char *name, int a, int r, int g, int b);
+
 // tr_shader.c -- this file deals with the parsing and definition of shaders
 
 static char *s_shaderText;
@@ -1954,11 +1956,6 @@ static qboolean ParseCondition( const char **text, resultType *res )
 }
 
 
-#ifdef __WASM__
-void R_AddPalette(const char *name, int a, int r, int g, int b);
-#endif
-
-
 /*
 =================
 ParseShader
@@ -2275,49 +2272,44 @@ static qboolean ParseShader( const char **text )
 
 			continue;
 		}
-
-#ifdef __WASM__
-
 		// parse palette colors for filename
     else if ( !Q_stricmp( token, "palette" ) ) {
       char file[MAX_OSPATH];
-      char colors[MAX_OSPATH];
       token = COM_ParseExt( text, qfalse );
       memcpy(file, token, sizeof(file));
-      memcpy(colors, COM_ParseExt( text, qfalse ), sizeof(colors));
+      const char *colors = COM_ParseExt( text, qfalse );
+      char color[4];
       int a = 0, r = 0, g = 0, b = 0;
       int ci = 0;
       int ri2 = 0;
       int gi = 0;
       int bi = 0;
-      for(int i = 0; i < 16; i++) {
-				if (colors[i] >= '0' && colors[i] <= '9') {
+      for(int i = 0; i < 12; i++) {
+        if(colors[i] == ',') {
+          if(ri2 == 0) {
+            color[ci] = 0;
+            a = atoi(color);
+            ri2 = i + 1;
+          } else if(gi == 0) {
+            color[ci] = 0;
+            r = atoi(color);
+            gi = i + 1;
 				} else {
-					colors[i] = ' ';
-				}
-			}
-			char *color = COM_ParseExt( text, qfalse );
-			for(int i = 0; i < 4; i++) {
-				if(color[0]) {
-					if(i == 0) {
-						r = atoi(color);
-					}
-					if(i == 1) {
+            color[ci] = 0;
 						g = atoi(color);
+            bi = i + 1;
+            b = atoi(&colors[bi]);
+            break;
 					}
-					if(i == 2) {
-						b = atoi(color);
-					}
-					if(i == 3) {
-						a = atoi(color);
-					}
+          ci = 0;
+        } else if (colors[i] >= '0' && colors[i] <= '9') {
+          color[ci] = colors[i];
+          ci++;
 				}
 			}
       R_AddPalette(file, a, r, g, b);
 			continue;
 		}
-#endif
-
     else if ( !Q_stricmp( token, "novlcollapse" ) )
 		{
 			// new in quakelive
@@ -3505,57 +3497,11 @@ static shader_t *FinishShader( void ) {
 	//
 	// if we are in r_vertexLight mode, never use a lightmap texture
 	//
-#ifndef __WASM__
-	if ( stage > 1 && ( (r_vertexLight->integer && tr.vertexLightingAllowed) || glConfig.hardwareType == GLHW_PERMEDIA2 ) ) {
+	if ( stage > 1 && ( (r_vertexLight->integer && tr.vertexLightingAllowed && !shader.noVLcollapse ) || glConfig.hardwareType == GLHW_PERMEDIA2 ) ) {
 		VertexLightingCollapse();
 		hasLightmapStage = qfalse;
 	}
-#else
-	if ( stage > 1 ) {
-		//VertexLightingCollapse();
-		hasLightmapStage = qfalse;
 
-		for ( stage = 0; stage < MAX_SHADER_STAGES; stage++ ) {
-			shaderStage_t *pStage = &stages[stage];
-
-			if ( !pStage->active ) {
-				continue;
-			}
-			if(pStage->bundle[0].numTexMods) {
-				continue;
-			}
-			if ( pStage->bundle[0].tcGen == TCGEN_TEXTURE ) {
-				if(pStage->bundle[0].numTexMods) {
-					pStage->rgbGen = CGEN_LIGHTING_DIFFUSE;
-				} else {
-					if(shader.lightmapIndex == LIGHTMAP_NONE) {
-						//pStage->rgbGen = CGEN_EXACT_VERTEX;
-						continue;
-					}
-					pStage->rgbGen = CGEN_LIGHTING_DIFFUSE;
-				}
-				//pStage->rgbGen = CGEN_LIGHTING_DIFFUSE;
-			}
-			if ( pStage->bundle[0].isLightmap ) {
-				//pStage->active = qfalse;
-				if ( shader.lightmapIndex == LIGHTMAP_NONE ) {
-					pStage->rgbGen = CGEN_LIGHTING_DIFFUSE;
-				} else {
-					pStage->rgbGen = CGEN_EXACT_VERTEX;
-				}
-				continue;
-			} else {
-				if ( pStage->bundle[0].tcGen == TCGEN_TEXTURE ) {
-					pStage->rgbGen = CGEN_EXACT_VERTEX;
-				}
-				//pStage->rgbGen = CGEN_EXACT_VERTEX;
-				//pStage->rgbGen = CGEN_LIGHTING_DIFFUSE;
-			}
-			//stages[0].stateBits &= ~( GLS_DSTBLEND_BITS | GLS_SRCBLEND_BITS );
-			//stages[0].stateBits |= GLS_DEPTHMASK_TRUE;
-		}
-	}
-#endif
 
 	//
 	// look for multitexture potential
@@ -3707,6 +3653,10 @@ shader_t *R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImag
 	image_t		*image;
 	shader_t	*sh;
 
+	if (!name) {
+		return tr.defaultShader;
+	}
+
 	if ( name[0] == '\0' ) {
 		return tr.defaultShader;
 	}
@@ -3733,16 +3683,15 @@ shader_t *R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImag
 		// then a default shader is created with lightmapIndex == LIGHTMAP_NONE, so we
 		// have to check all default shaders otherwise for every call to R_FindShader
 		// with that same strippedName a new default shader is created.
-		if ( (sh->lightmapSearchIndex == lightmapIndex || sh->defaultShader) 
-#ifdef __WASM__
-			&& sh->lastTimeUsed == tr.lastRegistrationTime
-#endif
-			&&	!Q_stricmp(sh->name, strippedName)
+		if ( (sh->lightmapSearchIndex == lightmapIndex || sh->defaultShader) &&	
+			(!Q_stricmp(sh->name, name))
+			//&& (variables[0] == '\0' || !Q_stricmp(sh->name, name)
 		) {
 			// match found
 			return sh;
 		}
 	}
+
 
 	InitShader( strippedName, lightmapIndex );
   shader.lastTimeUsed = tr.lastRegistrationTime;
@@ -4354,7 +4303,7 @@ static void ScanAndLoadShaderFiles( void )
 		hash = generateHashValue(token, MAX_SHADERTEXT_HASH);
 		shaderTextHashTable[hash][--shaderTextHashTableSizes[hash]] = (char*)oldp;
 
-#ifdef __WASM__
+#if 0 //def __WASM__
 		//Com_Printf("shaders: %s\n", token);
 		if(Q_stristr(token, "palettes/"))
 		{
@@ -4366,6 +4315,13 @@ static void ScanAndLoadShaderFiles( void )
 
 		SkipBracedSection(&p, 0);
 	}
+
+	const char *shaderText = FindShaderInShaderText("palettes/default");
+	if ( !shaderText ) {
+    ri.Printf(PRINT_WARNING, "Error: parsing default palette\n");
+  } else {
+    ParseShader( &shaderText );
+  }
 }
 
 
@@ -4375,9 +4331,7 @@ CreateInternalShaders
 ====================
 */
 static void CreateInternalShaders( void ) {
-#ifndef __WASM__
 	tr.numShaders = 0;
-#endif
 
 	// init the default shader
 	InitShader( "<default>", LIGHTMAP_NONE );
